@@ -9,7 +9,8 @@ from werkzeug.utils import secure_filename
 UPLOAD_FOLDER = "storage_uploads"
 ALLOWED_EXTENSIONS = {
     "txt", "pdf", "png", "jpg", "jpeg", "gif",
-    "wav", "mp3", "mp4", "json", "csv"
+    "wav", "mp3", "mp4", "json", "csv", "py",
+    "html",  
 }
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
