@@ -1,19 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Zara Storage Space</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 2rem; }
-        h1   { margin-top: 0; }
-        ul   { list-style: none; padding-left: 0; }
-        li   { margin: 0.4rem 0; }
-        .msg { color: green; margin-bottom: 1rem; }
-        button { margin-left: 0.5rem; }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Zara Storage Vault</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0f1115;
+      color: #e0e0e0;
+    }
+    header {
+      background: linear-gradient(90deg, #2f2f3f, #1c1f26);
+      padding: 1rem 2rem;
+      box-shadow: 0 0 10px rgba(0,255,255,0.1);
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      color: #00ffff;
+      letter-spacing: 1px;
+    }
+    .container {
+      padding: 2rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    .msg {
+      color: #00ff99;
+      background-color: #1e2a26;
+      border-left: 4px solid #00ff99;
+      padding: 0.5rem 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: 6px;
+    }
+    .upload-box {
+      border: 2px dashed #555;
+      padding: 1.5rem;
+      border-radius: 8px;
+      background: #1c1f26;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .upload-box input[type="file"] {
+      margin-top: 1rem;
+    }
+    .file-card {
+      background: #1a1d23;
+      border: 1px solid #2f2f3f;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .file-card a {
+      color: #00ffff;
+      text-decoration: none;
+    }
+    .file-card a:hover {
+      text-decoration: underline;
+    }
+    .file-card button {
+      background: #ff0033;
+      color: white;
+      border: none;
+      padding: 0.3rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .file-card button:hover {
+      background: #cc0022;
+    }
+  </style>
 </head>
 <body>
-    <h1>Zara Storage Space</h1>
+  <header>
+    <h1>🤖 Zara's Personal Storage Vault</h1>
+  </header>
+
+  <div class="container">
 
     {% with messages = get_flashed_messages() %}
       {% if messages %}
@@ -21,24 +88,29 @@
       {% endif %}
     {% endwith %}
 
-    <!-- Upload form -->
-    <form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
-        <input type="file" name="file" required>
-        <input type="submit" value="Upload">
-    </form>
+    <div class="upload-box">
+      <h2>Upload a File</h2>
+      <form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+        <input type="file" name="file" required />
+        <br/><br/>
+        <input type="submit" value="Upload" style="padding:0.5rem 1rem; background:#00ffff; border:none; color:#000; border-radius:4px; cursor:pointer;" />
+      </form>
+    </div>
 
-    <h2>Stored Files ({{ files|length }})</h2>
-    <ul>
-      {% for file in files %}
-        <li>
+    <h2>📁 Stored Files ({{ files|length }})</h2>
+
+    {% for file in files %}
+      <div class="file-card">
+        <div>
           <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">{{ file }}</a>
-          <form method="POST" action="{{ url_for('delete_file', filename=file) }}" style="display:inline;">
-              <button type="submit" onclick="return confirm('Delete {{ file }}?')">Delete</button>
-          </form>
-        </li>
-      {% else %}
-        <li><em>No files yet.</em></li>
-      {% endfor %}
-    </ul>
+        </div>
+        <form method="POST" action="{{ url_for('delete_file', filename=file) }}">
+          <button onclick="return confirm('Delete {{ file }}?')">Delete</button>
+        </form>
+      </div>
+    {% else %}
+      <p><em>No files stored yet.</em></p>
+    {% endfor %}
+  </div>
 </body>
 </html>
