@@ -1,26 +1,83 @@
-from flask import Flask, request, redirect, render_template, send_from_directory
+from flask import (
+    Flask, request, redirect, url_for,
+    render_template, send_from_directory, jsonify, flash
+)
 import os
+from werkzeug.utils import secure_filename
 
-app = Flask(__name__)
-UPLOAD_FOLDER = 'uploads'
+# ── Config ────────────────────────────────────────────────────────────
+UPLOAD_FOLDER = "storage_uploads"
+ALLOWED_EXTENSIONS = {
+    "txt", "pdf", "png", "jpg", "jpeg", "gif",
+    "wav", "mp3", "mp4", "json", "csv"
+}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-@app.route('/')
-def home():
-    files = os.listdir(UPLOAD_FOLDER)
-    return render_template('index.html', files=files)
+app = Flask(__name__)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.secret_key = "super‑secret‑change‑me"        # for flash messages
 
-@app.route('/upload', methods=['POST'])
-def upload():
-    file = request.files['file']
-    if file:
-        file.save(os.path.join(UPLOAD_FOLDER, file.filename))
-    return redirect('/')
+# ── Helpers ───────────────────────────────────────────────────────────
+def allowed_file(filename: str) -> bool:
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    )
 
-@app.route('/download/<filename>')
-def download(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
+# ── Routes ────────────────────────────────────────────────────────────
+@app.route("/storage", methods=["GET"])
+def storage():
+    files = sorted(os.listdir(app.config["UPLOAD_FOLDER"]))
+    return render_template("index.html", files=files)
 
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
+
+# ── Upload route ───────────────────────────────────────────
+@app.route("/upload_file", methods=["POST"])
+def upload_file():          # ← rename from `upload` to `upload_file`
+    """
+    Saves an uploaded file, then redirects back to /storage.
+    """
+    if "file" not in request.files:
+        flash("No file field")
+        return redirect(url_for("storage"))
+
+    file = request.files["file"]
+    if file.filename == "":
+        flash("No file selected")
+        return redirect(url_for("storage"))
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+        flash(f"Uploaded {filename}")
+    else:
+        flash("File type not allowed")
+
+    return redirect(url_for("storage"))
+
+
+@app.route("/storage/files/<path:filename>")
+def uploaded_file(filename):
+    """Stream file to the client."""
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename, as_attachment=False)
+
+
+@app.route("/delete/<path:filename>", methods=["POST"])
+def delete_file(filename):
+    try:
+        os.remove(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+        flash(f"Deleted: {filename}")
+    except FileNotFoundError:
+        flash("File not found")
+    return redirect(url_for("storage"))
+
+
+# Optional JSON API so Zara can query the store programmatically
+@app.route("/api/files")
+def api_files():
+    files = sorted(os.listdir(app.config["UPLOAD_FOLDER"]))
+    return jsonify(files)
+
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=5000)
