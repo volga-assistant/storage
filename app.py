@@ -25,6 +25,11 @@ def allowed_file(filename: str) -> bool:
     )
 
 # ── Routes ────────────────────────────────────────────────────────────
+@app.route("/")
+def home():
+    return redirect(url_for("storage"))
+
+
 @app.route("/storage", methods=["GET"])
 def storage():
     files = sorted(os.listdir(app.config["UPLOAD_FOLDER"]))
